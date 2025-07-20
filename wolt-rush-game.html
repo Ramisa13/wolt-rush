@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wolt Rush - Food Delivery Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --wolt-blue: #003dff;
+            --wolt-dark: #0029a8;
+            --wolt-light: #e6ecff;
+            --wolt-accent: #ff3e6f;
+            --road-color: #4b5563;
+            --building-color: #d1d5db;
+            --park-color: #a7f3d0;
+            --water-color: #bfdbfe;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
+
+        .hero-title {
+            font-family: 'Fredoka One', cursive;
+            text-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+        }
+
+        .wolt-gradient {
+            background: linear-gradient(135deg, var(--wolt-blue) 0%, var(--wolt-dark) 100%);
+        }
+        
+        .hero-section {
+            cursor: pointer;
+        }
+
+        .delivery-map {
+            position: relative;
+            background-color: #f3f4f6;
+            background-image: 
+                /* Main roads */
+                linear-gradient(to right, var(--road-color) 10px, transparent 10px),
+                linear-gradient(to bottom, var(--road-color) 10px, transparent 10px),
+                /* Side streets */
+                linear-gradient(to right, var(--road-color) 6px, transparent 6px),
+                linear-gradient(to bottom, var(--road-color) 6px, transparent 6px);
+            background-size: 
+                120px 120px, 
+                120px 120px,
+                60px 60px,
+                60px 60px;
+        }
+
+        .building {
+            position: absolute;
+            background-color: var(--building-color);
+            border: 2px solid #9ca3af;
+            z-index: 1;
+        }
+
+        .park {
+            position: absolute;
+            background-color: var(--park-color);
+            border: 2px solid #6ee7b7;
+            z-index: 1;
+        }
+
+        .water {
+            position: absolute;
+            background-color: var(--water-color);
+            border: 2px solid #93c5fd;
+            z-index: 1;
+        }
+
+        .delivery-bike {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background-color: var(--wolt-blue);
+            border-radius: 4px;
+            z-index: 10;
+            transition: left 0.1s, top 0.1s;
+        }
+
+        .restaurant-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            z-index: 5;
+        }
+
+        .customer-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #10b981;
+            border-radius: 50%;
+            z-index: 5;
+        }
+
+        .traffic {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background-color: #f59e0b;
+            border-radius: 2px;
+            z-index: 3;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+
+        .difficulty-selector {
+            transition: all 0.2s;
+        }
+
+        .difficulty-selector:hover {
+            transform: scale(1.05);
+        }
+
+        .difficulty-selector.selected {
+            border: 3px solid var(--wolt-blue);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <section class="hero-section wolt-gradient py-16 px-4 text-white">
+        <div class="container mx-auto max-w-6xl flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 mb-8 md:mb-0 md:pr-8">
+                <div class="flex items-center mb-4">
+                    <h1 class="hero-title text-5xl md:text-6xl font-bold">
+                        <span class="text-white">WOLT RUSH</span>
+                    </h1>
+                </div>
+                <p class="text-xl text-white text-opacity-90 mb-6">
+                    Navigate the city streets, avoid traffic, and deliver food as fast as you can!
+                </p>
+                <div class="flex space-x-4">
+                     <p class="text-2xl font-semibold mt-4">SAKIB EKHON TAKA PURBE</p>
+                </div>
+            </div>
+            <div class="md:w-1/2">
+               <img src="C:\Users\Asus\Videos\Captures\WhatsApp Image 2025-07-20 at 21.55.16_7a12f71e.jpg" alt="Wolt delivery rider" class="rounded-lg shadow-xl" />
+            </div>
+        </div>
+    </section>
+
+    <section class="py-12 px-4 bg-white hidden" id="difficulty-section">
+        <div class="container mx-auto max-w-6xl">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">Select Difficulty</h2>
+            <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
+                Choose your challenge level. Harder difficulties have more traffic and shorter timers!
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <div class="difficulty-selector cursor-pointer text-center p-6 rounded-xl border-2 border-gray-200" data-difficulty="easy">
+                    <div class="text-5xl mb-4">😊</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Easy</h3>
+                    <p class="text-gray-600">• Slow traffic<br>• 2 minute timer<br>• Simple routes</p>
+                </div>
+                
+                <div class="difficulty-selector cursor-pointer text-center p-6 rounded-xl border-2 border-gray-200 selected" data-difficulty="medium">
+                    <div class="text-5xl mb-4">😐</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Medium</h3>
+                    <p class="text-gray-600">• Moderate traffic<br>• 90 second timer<br>• Some obstacles</p>
+                </div>
+                
+                <div class="difficulty-selector cursor-pointer text-center p-6 rounded-xl border-2 border-gray-200" data-difficulty="hard">
+                    <div class="text-5xl mb-4">😈</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Hard</h3>
+                    <p class="text-gray-600">• Heavy traffic<br>• 60 second timer<br>• Complex routes</p>
+                </div>
+            </div>
+            
+            <div class="flex justify-center">
+                <button id="confirm-difficulty" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-full shadow-md transition transform hover:scale-105">
+                    Confirm Difficulty
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section class="game-container hidden flex-col items-center justify-center bg-gray-100 py-12 px-4" id="game-section">
+        <div class="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-gray-800 text-white p-4 flex justify-between items-center">
+                <div class="flex items-center">
+                    <span class="font-bold">WOLT RUSH</span>
+                    <span class="ml-4 text-sm" id="difficulty-display">Medium</span>
+                </div>
+                <div>
+                    <span id="timer" class="font-mono text-lg">01:30</span>
+                </div>
+            </div>
+            
+            <div class="relative p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <div class="text-lg font-medium">
+                            Order from <span id="current-restaurant" class="text-blue-600">Burger Factory</span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            Deliver to: <span id="delivery-address">123 Main St (1.2km)</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-bold text-blue-600" id="current-reward">€3.50</div>
+                        <div class="text-xs text-gray-500">Potential Reward</div>
+                    </div>
+                </div>
+                
+                <div class="delivery-map relative h-96 w-full rounded-lg mb-4 overflow-hidden" id="map-container">
+                    </div>
+                
+                <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                    <div class="w-full sm:w-auto">
+                        <div class="text-sm font-medium text-gray-700 mb-1">
+                            Time bonus: <span id="bonus-time">01:15</span> left (<span id="bonus-amount">+€1.50</span>)
+                        </div>
+                        <div class="h-2 w-full bg-gray-200 rounded overflow-hidden">
+                            <div id="time-bonus-bar" class="h-full bg-yellow-400"></div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="move-up" class="bg-gray-200 hover:bg-gray-300 rounded-lg p-3 focus:outline-none">
+                            ↑
+                        </button>
+                        <button id="move-left" class="bg-gray-200 hover:bg-gray-300 rounded-lg p-3 focus:outline-none">
+                            ←
+                        </button>
+                        <button id="move-right" class="bg-gray-200 hover:bg-gray-300 rounded-lg p-3 focus:outline-none">
+                            →
+                        </button>
+                        <button id="move-down" class="bg-gray-200 hover:bg-gray-300 rounded-lg p-3 focus:outline-none">
+                            ↓
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-100 px-6 py-3 border-t border-gray-200">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <span class="text-sm font-medium text-gray-700">Deliveries:</span>
+                        <span id="deliveries-count" class="ml-1 font-bold">0</span>
+                        <span class="mx-2">|</span>
+                        <span class="text-sm font-medium text-gray-700">Success Rate:</span>
+                        <span id="success-rate" class="ml-1 font-bold">100%</span>
+                    </div>
+                    <div>
+                        <span class="text-sm font-medium text-gray-700">Total Earnings:</span>
+                        <span id="total-earnings" class="ml-1 font-bold text-blue-600">€0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="hidden py-12 px-4 bg-white" id="game-over-section">
+        <div class="container mx-auto max-w-2xl text-center">
+            <h2 class="text-4xl font-bold text-gray-800 mb-6">Game Over!</h2>
+            
+            <div class="bg-gray-100 rounded-xl p-6 mb-8">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="text-left">
+                        <div class="text-sm text-gray-500">Deliveries Completed</div>
+                        <div class="text-2xl font-bold" id="final-deliveries">0</div>
+                    </div>
+                    <div class="text-left">
+                        <div class="text-sm text-gray-500">Success Rate</div>
+                        <div class="text-2xl font-bold" id="final-success-rate">100%</div>
+                    </div>
+                    <div class="text-left">
+                        <div class="text-sm text-gray-500">Total Earnings</div>
+                        <div class="text-2xl font-bold text-blue-600" id="final-earnings">€0.00</div>
+                    </div>
+                    <div class="text-left">
+                        <div class="text-sm text-gray-500">Difficulty</div>
+                        <div class="text-2xl font-bold" id="final-difficulty">Medium</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-center space-x-4">
+                <button id="play-again-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:scale-105">
+                    Play Again
+                </button>
+                <button id="change-difficulty-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:scale-105">
+                    Change Difficulty
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Game State
+        const gameState = {
+            difficulty: 'medium',
+            timer: 90,
+            baseTimer: 90,
+            isPlaying: false,
+            deliveriesCompleted: 0,
+            deliveriesAttempted: 0,
+            totalEarnings: 0,
+            bikePosition: { x: 50, y: 50 },
+            restaurantPosition: { x: 20, y: 70 },
+            customerPosition: { x: 80, y: 30 },
+            traffic: [],
+            buildings: [],
+            currentBonus: 1.5,
+            baseReward: 3.5,
+            gameInterval: null,
+            trafficInterval: null
+        };
+
+        // Game Elements
+        const restaurants = [
+            { name: "Burger Factory", distance: "1.2km", address: "123 Main St" },
+            { name: "Tokyo Sushi", distance: "0.8km", address: "456 Elm St" },
+            { name: "Napoli Pizza", distance: "1.5km", address: "789 Oak Ave" },
+            { name: "Taco Fiesta", distance: "1.0km", address: "321 Pine Rd" },
+            { name: "Curry House", distance: "1.8km", address: "654 Maple Blvd" }
+        ];
+
+        // DOM Elements
+        const heroSection = document.querySelector('.hero-section');
+        const difficultySelectors = document.querySelectorAll('.difficulty-selector');
+        const confirmDifficultyBtn = document.getElementById('confirm-difficulty');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const changeDifficultyBtn = document.getElementById('change-difficulty-btn');
+        const difficultySection = document.getElementById('difficulty-section');
+        const gameSection = document.getElementById('game-section');
+        const gameOverSection = document.getElementById('game-over-section');
+        const mapContainer = document.getElementById('map-container');
+        const timerDisplay = document.getElementById('timer');
+        const deliveriesCount = document.getElementById('deliveries-count');
+        const successRateDisplay = document.getElementById('success-rate');
+        const totalEarnings = document.getElementById('total-earnings');
+        const currentRestaurant = document.getElementById('current-restaurant');
+        const deliveryAddress = document.getElementById('delivery-address');
+        const currentReward = document.getElementById('current-reward');
+        const bonusTimeDisplay = document.getElementById('bonus-time');
+        const bonusAmountDisplay = document.getElementById('bonus-amount');
+        const bonusTimeBar = document.getElementById('time-bonus-bar');
+        const difficultyDisplay = document.getElementById('difficulty-display');
+        const finalDeliveries = document.getElementById('final-deliveries');
+        const finalSuccessRate = document.getElementById('final-success-rate');
+        const finalEarnings = document.getElementById('final-earnings');
+        const finalDifficulty = document.getElementById('final-difficulty');
+
+        // Movement Controls
+        const moveUpBtn = document.getElementById('move-up');
+        const moveDownBtn = document.getElementById('move-down');
+        const moveLeftBtn = document.getElementById('move-left');
+        const moveRightBtn = document.getElementById('move-right');
+
+        // Keyboard Controls
+        document.addEventListener('keydown', (e) => {
+            if (!gameState.isPlaying) return;
+            
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    moveBike(0, -5);
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    moveBike(0, 5);
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    moveBike(-5, 0);
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    moveBike(5, 0);
+                    break;
+            }
+        });
+
+        // Event Listeners
+        // The entire hero section is now clickable to start the game
+        heroSection.addEventListener('click', () => {
+            heroSection.classList.add('hidden');
+            difficultySection.classList.remove('hidden');
+        });
+
+        difficultySelectors.forEach(selector => {
+            selector.addEventListener('click', () => {
+                difficultySelectors.forEach(s => s.classList.remove('selected'));
+                selector.classList.add('selected');
+                gameState.difficulty = selector.dataset.difficulty;
+            });
+        });
+
+        confirmDifficultyBtn.addEventListener('click', startGame);
+        playAgainBtn.addEventListener('click', startGame);
+        changeDifficultyBtn.addEventListener('click', () => {
+            gameOverSection.classList.add('hidden');
+            difficultySection.classList.remove('hidden');
+        });
+
+        moveUpBtn.addEventListener('click', () => moveBike(0, -5));
+        moveDownBtn.addEventListener('click', () => moveBike(0, 5));
+        moveLeftBtn.addEventListener('click', () => moveBike(-5, 0));
+        moveRightBtn.addEventListener('click', () => moveBike(5, 0));
+
+        // Game Functions
+        function startGame() {
+            // Reset game state based on difficulty
+            switch(gameState.difficulty) {
+                case 'easy':
+                    gameState.baseTimer = 120;
+                    gameState.baseReward = 3.0;
+                    break;
+                case 'medium':
+                    gameState.baseTimer = 90;
+                    gameState.baseReward = 3.5;
+                    break;
+                case 'hard':
+                    gameState.baseTimer = 60;
+                    gameState.baseReward = 4.0;
+                    break;
+            }
+
+            gameState.timer = gameState.baseTimer;
+            gameState.deliveriesCompleted = 0;
+            gameState.deliveriesAttempted = 0;
+            gameState.totalEarnings = 0;
+            gameState.currentBonus = 1.5;
+
+            // Update UI
+            difficultyDisplay.textContent = gameState.difficulty.charAt(0).toUpperCase() + gameState.difficulty.slice(1);
+            difficultySection.classList.add('hidden');
+            gameOverSection.classList.add('hidden');
+            gameSection.classList.remove('hidden');
+
+            // Initialize game
+            initializeMap();
+            startDelivery();
+        }
+
+        function initializeMap() {
+            // Clear map
+            mapContainer.innerHTML = '';
+
+            // Create buildings and obstacles
+            createCityLayout();
+
+            // Create bike element
+            const bike = document.createElement('div');
+            bike.className = 'delivery-bike';
+            bike.id = 'bike';
+            bike.style.left = `${gameState.bikePosition.x}%`;
+            bike.style.top = `${gameState.bikePosition.y}%`;
+            mapContainer.appendChild(bike);
+
+            // Create restaurant marker (red point)
+            const restaurant = document.createElement('div');
+            restaurant.className = 'restaurant-marker';
+            restaurant.id = 'restaurant';
+            restaurant.style.left = `${gameState.restaurantPosition.x}%`;
+            restaurant.style.top = `${gameState.restaurantPosition.y}%`;
+            mapContainer.appendChild(restaurant);
+
+            // Create customer marker (green point)
+            const customer = document.createElement('div');
+            customer.className = 'customer-marker';
+            customer.id = 'customer';
+            customer.style.left = `${gameState.customerPosition.x}%`;
+            customer.style.top = `${gameState.customerPosition.y}%`;
+            mapContainer.appendChild(customer);
+
+            // Create traffic based on difficulty
+            createTraffic();
+        }
+
+        function createCityLayout() {
+            // Clear previous elements
+            gameState.buildings = [];
+            
+            // Create buildings (20-30% of map area)
+            const buildingCount = 15 + Math.floor(Math.random() * 10);
+            
+            for (let i = 0; i < buildingCount; i++) {
+                const width = 30 + Math.random() * 50;
+                const height = 30 + Math.random() * 70;
+                const left = Math.random() * 80;
+                const top = Math.random() * 80;
+                
+                // Ensure buildings don't cover the center where bike starts
+                if (Math.abs(left - 50) < 20 && Math.abs(top - 50) < 20) continue;
+                
+                const building = document.createElement('div');
+                building.className = Math.random() > 0.8 ? 
+                    (Math.random() > 0.5 ? 'park' : 'water') : 'building';
+                building.style.width = `${width}px`;
+                building.style.height = `${height}px`;
+                building.style.left = `${left}%`;
+                building.style.top = `${top}%`;
+                
+                mapContainer.appendChild(building);
+                gameState.buildings.push({
+                    element: building,
+                    left, top, 
+                    right: left + (width / mapContainer.offsetWidth * 100),
+                    bottom: top + (height / mapContainer.offsetHeight * 100)
+                });
+            }
+        }
+
+        function createTraffic() {
+            // Clear previous traffic
+            gameState.traffic = [];
+            const trafficElements = document.querySelectorAll('.traffic');
+            trafficElements.forEach(el => el.remove());
+            
+            // Create traffic based on difficulty
+            let trafficCount;
+            switch(gameState.difficulty) {
+                case 'easy': trafficCount = 3; break;
+                case 'medium': trafficCount = 6; break;
+                case 'hard': trafficCount = 10; break;
+            }
+            
+            for (let i = 0; i < trafficCount; i++) {
+                const traffic = document.createElement('div');
+                traffic.className = 'traffic';
+                
+                // Position traffic along roads (aligned to grid)
+                const left = Math.floor(Math.random() * 8) * 12.5;
+                const top = Math.floor(Math.random() * 8) * 12.5;
+                
+                traffic.style.left = `${left}%`;
+                traffic.style.top = `${top}%`;
+                
+                mapContainer.appendChild(traffic);
+                gameState.traffic.push({ element: traffic, x: left, y: top });
+            }
+            
+            // Move traffic periodically
+            if (gameState.trafficInterval) clearInterval(gameState.trafficInterval);
+            
+            let trafficDirection = 1;
+            gameState.trafficInterval = setInterval(() => {
+                gameState.traffic.forEach(car => {
+                    // Alternate between horizontal and vertical movement
+                    if (Math.random() > 0.5) {
+                        car.x = (car.x + (trafficDirection * 12.5) + 100) % 100;
+                    } else {
+                        car.y = (car.y + (trafficDirection * 12.5) + 100) % 100;
+                    }
+                    
+                    car.element.style.left = `${car.x}%`;
+                    car.element.style.top = `${car.y}%`;
+                });
+                
+                trafficDirection *= -1; // Reverse direction
+            }, 2000);
+        }
+
+        function startDelivery() {
+            // Reset positions
+            gameState.bikePosition = { x: 50, y: 50 };
+            document.getElementById('bike').style.left = '50%';
+            document.getElementById('bike').style.top = '50%';
+            
+            // Randomize restaurant and customer positions (ensuring they're on roads)
+            gameState.restaurantPosition = getRandomRoadPosition();
+            gameState.customerPosition = getRandomRoadPosition();
+            
+            document.getElementById('restaurant').style.left = `${gameState.restaurantPosition.x}%`;
+            document.getElementById('restaurant').style.top = `${gameState.restaurantPosition.y}%`;
+            document.getElementById('customer').style.left = `${gameState.customerPosition.x}%`;
+            document.getElementById('customer').style.top = `${gameState.customerPosition.y}%`;
+            
+            // Select random restaurant
+            const restaurant = restaurants[Math.floor(Math.random() * restaurants.length)];
+            currentRestaurant.textContent = restaurant.name;
+            deliveryAddress.textContent = `${restaurant.address} (${restaurant.distance})`;
+
+
+            // Reset timer and bonus
+            gameState.timer = gameState.baseTimer;
+            gameState.currentBonus = 1.5;
+            updateTimerDisplay();
+            
+            // Start game
+            gameState.isPlaying = true;
+            gameState.deliveriesAttempted++;
+            
+            if (gameState.gameInterval) clearInterval(gameState.gameInterval);
+            gameState.gameInterval = setInterval(updateGame, 1000);
+        }
+
+        function getRandomRoadPosition() {
+            // Returns a position aligned to the road grid
+            const mainRoad = Math.random() > 0.5;
+            if (mainRoad) {
+                return {
+                    x: Math.floor(Math.random() * 8) * 12.5,
+                    y: Math.floor(Math.random() * 8) * 12.5
+                };
+            } else {
+                return {
+                    x: Math.floor(Math.random() * 16) * 6.25,
+                    y: Math.floor(Math.random() * 16) * 6.25
+                };
+            }
+        }
+
+        function moveBike(dx, dy) {
+            if (!gameState.isPlaying) return;
+            
+            const newX = gameState.bikePosition.x + dx;
+            const newY = gameState.bikePosition.y + dy;
+            
+            // Check boundaries
+            if (newX < 0 || newX > 100 || newY < 0 || newY > 100) return;
+            
+            // Check for collisions with buildings
+            const bikeWidth = 24 / mapContainer.offsetWidth * 100;
+            const bikeHeight = 24 / mapContainer.offsetHeight * 100;
+            
+            for (const building of gameState.buildings) {
+                if (newX + bikeWidth > building.left && 
+                    newX < building.right && 
+                    newY + bikeHeight > building.top && 
+                    newY < building.bottom) {
+                    // Collision detected with building or obstacle
+                    alert("BAAL PAROS! Jah out and game over");
+                    endGame();
+                    return;
+                }
+            }
+            
+            // Check for collisions with traffic (yellow signal)
+            for (const car of gameState.traffic) {
+                const carSize = 16 / mapContainer.offsetWidth * 100;
+                if (Math.abs(newX - car.x) < carSize && Math.abs(newY - car.y) < carSize) {
+                    // Collision with traffic signal
+                    alert("BAAL PAROS! Jah out and game over");
+                    endGame();
+                    return;
+                }
+            }
+            
+            // Update position
+            gameState.bikePosition.x = newX;
+            gameState.bikePosition.y = newY;
+            document.getElementById('bike').style.left = `${newX}%`;
+            document.getElementById('bike').style.top = `${newY}%`;
+            
+            // Check if reached restaurant (to pick up order)
+            if (distance(gameState.bikePosition, gameState.restaurantPosition) < 5) {
+                // Rider has successfully picked up the order
+            }
+            
+            // Check if reached customer (to deliver)
+            if (distance(gameState.bikePosition, gameState.customerPosition) < 5) {
+                completeDelivery();
+            }
+        }
+
+        function distance(pos1, pos2) {
+            return Math.sqrt(Math.pow(pos1.x - pos2.x, 2) + Math.pow(pos1.y - pos2.y, 2));
+        }
+
+        function updateGame() {
+            gameState.timer--;
+            updateTimerDisplay();
+            
+            // Update bonus (decreases over time)
+            if (gameState.timer > gameState.baseTimer * 0.5) {
+                gameState.currentBonus = 1.5;
+            } else if (gameState.timer > gameState.baseTimer * 0.25) {
+                gameState.currentBonus = 1.25;
+            } else {
+                gameState.currentBonus = 1.0;
+            }
+            
+            currentReward.textContent = `€${(gameState.baseReward * gameState.currentBonus).toFixed(2)}`;
+            
+            // End game if time runs out
+            if (gameState.timer <= 0) {
+                endGame();
+            }
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(gameState.timer / 60);
+            const seconds = gameState.timer % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update bonus time display
+            const bonusTime = Math.max(0, gameState.timer - (gameState.baseTimer * 0.5));
+            const bonusMinutes = Math.floor(bonusTime / 60);
+            const bonusSeconds = bonusTime % 60;
+            bonusTimeDisplay.textContent = `${bonusMinutes.toString().padStart(2, '0')}:${bonusSeconds.toString().padStart(2, '0')}`;
+            
+            // Update bonus amount
+            bonusAmountDisplay.textContent = `+€${(gameState.baseReward * 0.5).toFixed(2)}`;
+            
+            // Update bonus bar
+            const bonusPercentage = Math.max(0, (gameState.timer - (gameState.baseTimer * 0.5)) / (gameState.baseTimer * 0.5) * 100);
+            bonusTimeBar.style.width = `${bonusPercentage}%`;
+        }
+
+        function completeDelivery() {
+            if (!gameState.isPlaying) return;
+            
+            // Calculate reward
+            const reward = gameState.baseReward * gameState.currentBonus;
+            gameState.totalEarnings += reward;
+            gameState.deliveriesCompleted++;
+            
+            // Update UI
+            deliveriesCount.textContent = gameState.deliveriesCompleted;
+            const successRate = Math.round((gameState.deliveriesCompleted / gameState.deliveriesAttempted) * 100);
+            successRateDisplay.textContent = `${successRate}%`;
+            totalEarnings.textContent = `€${gameState.totalEarnings.toFixed(2)}`;
+            
+            // Show completion message
+            alert("TOKE WOLT MARKET ER SAMNEI MANAY"); // Alert popup on delivery completion
+            
+            // Start next delivery
+            startDelivery();
+        }
+
+        function endGame() {
+            gameState.isPlaying = false;
+            clearInterval(gameState.gameInterval);
+            clearInterval(gameState.trafficInterval);
+            
+            // Update final stats
+            finalDeliveries.textContent = gameState.deliveriesCompleted;
+            const successRate = gameState.deliveriesAttempted > 0 ? 
+                Math.round((gameState.deliveriesCompleted / gameState.deliveriesAttempted) * 100) : 0;
+            finalSuccessRate.textContent = `${successRate}%`;
+            finalEarnings.textContent = `€${gameState.totalEarnings.toFixed(2)}`;
+            finalDifficulty.textContent = gameState.difficulty.charAt(0).toUpperCase() + gameState.difficulty.slice(1);
+            
+            // Show game over screen
+            gameSection.classList.add('hidden');
+            gameOverSection.classList.remove('hidden');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set medium difficulty as default
+            document.querySelector('[data-difficulty="medium"]').classList.add('selected');
+        });
+    </script>
+</body>
+</html>
